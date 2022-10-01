@@ -1,4 +1,4 @@
-/home/yeff/.local/share/JetBrains/Toolbox/apps/CLion/ch-0/222.3345.126/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=/home/yeff/.local/share/JetBrains/Toolbox/apps/CLion/ch-0/222.3345.126/bin/ninja/linux/ninja -G Ninja -S /home/yeff/CLionProjects/openglproj -B /home/yeff/CLionProjects/openglproj/cmake-build-debug
+/home/work/.local/share/JetBrains/Toolbox/apps/CLion/ch-0/222.3739.54/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" -S /home/work/CLionProjects/openglproj -B /home/work/CLionProjects/openglproj/cmake-build-debug
 -- Configuring done
 -- Generating done
--- Build files have been written to: /home/yeff/CLionProjects/openglproj/cmake-build-debug
+-- Build files have been written to: /home/work/CLionProjects/openglproj/cmake-build-debug
