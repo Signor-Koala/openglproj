@@ -5,16 +5,14 @@
 
 const char *vertexShaderSource = "#version 460 core\n"
                                  "layout (location = 0) in vec3 aPos;\n"
-                                 "out vec4 colour;"
                                  "void main()\n"
                                  "{\n"
-                                 "   colour = vec4(aPos,1.0);"
                                  "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
                                  "}\0";
 
 const char *fragmentShaderSource = "#version 460 core\n"
                                    "out vec4 FragColor;\n"
-                                   "in vec4 colour;"
+                                   "uniform vec4 colour;"
                                    "void main()\n"
                                    "{\n"
                                    "    FragColor = colour;\n"
@@ -77,9 +75,7 @@ int main() {
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
-
     glUseProgram(shaderProgram);
-
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
@@ -87,6 +83,14 @@ int main() {
         //rendering stuff goes here
         glClearColor(0.5f, 0.0f, 0.6f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+
+        float timeValue = glfwGetTime();
+        float colourG = (sin(timeValue) / 2.0f) + 0.5f;
+        float colourR = (sin(timeValue + ((2*3.1415)/3)) / 2.0f) + 0.5f;
+        float colourB = (sin(timeValue + ((4*3.1415)/3)) / 2.0f) + 0.5f;
+        int vertexColorLocation = glGetUniformLocation(shaderProgram, "colour");
+        glUniform4f(vertexColorLocation, colourR, colourG, colourB, 1.0f);
+
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
         glfwSwapBuffers(window);
