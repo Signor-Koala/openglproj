@@ -1,22 +1,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include "shader.h"
 #include <iostream>
 #include <cmath>
-
-const char *vertexShaderSource = "#version 460 core\n"
-                                 "layout (location = 0) in vec3 aPos;\n"
-                                 "void main()\n"
-                                 "{\n"
-                                 "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-                                 "}\0";
-
-const char *fragmentShaderSource = "#version 460 core\n"
-                                   "out vec4 FragColor;\n"
-                                   "uniform vec4 colour;"
-                                   "void main()\n"
-                                   "{\n"
-                                   "    FragColor = colour;\n"
-                                   "}\0";
 
 int main() {
     glfwInit();
@@ -51,15 +37,6 @@ int main() {
     unsigned int VAO;
     glGenVertexArrays(1, &VAO);
 
-    unsigned int vertexShader;
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-
-    unsigned int fragmentShader;
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-
     // Instructions for how to use the data given
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -67,29 +44,17 @@ int main() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3* sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    glCompileShader(fragmentShader);
-
-    unsigned int shaderProgram;
-    shaderProgram = glCreateProgram();
-
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-    glUseProgram(shaderProgram);
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+    Shader ourShader("../vertShader.vert","../fragShader.frag");
+    ourShader.use();
 
     while(!glfwWindowShouldClose(window)) {
-        //rendering stuff goes here
-        glClearColor(0.5f, 0.0f, 0.6f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
         float timeValue = glfwGetTime();
         float colourG = (sin(timeValue) / 2.0f) + 0.5f;
         float colourR = (sin(timeValue + ((2*3.1415)/3)) / 2.0f) + 0.5f;
         float colourB = (sin(timeValue + ((4*3.1415)/3)) / 2.0f) + 0.5f;
-        int vertexColorLocation = glGetUniformLocation(shaderProgram, "colour");
-        glUniform4f(vertexColorLocation, colourR, colourG, colourB, 1.0f);
+        //rendering stuff goes here
+        glClearColor(colourR, colourG, colourB, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
 
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
