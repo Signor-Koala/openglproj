@@ -12,5 +12,5 @@ uniform mat4 transform;
 
 void main()
 {
-    FragColor = mix(texture(texture0, TexCoord0), texture(texture1, TexCoord1), sin(time)) * ourColor;
+    FragColor = mix(texture(texture0, TexCoord0), texture(texture1, TexCoord1) * ourColor, 0.5f + 0.25f * sin(time));
 }
