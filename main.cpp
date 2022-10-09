@@ -11,7 +11,48 @@
 #include "stb_image.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
-    glViewport(0, 0, width, height);
+    glViewport(0, 0, std::max(width, height), std::max(width, height));
+}
+
+bool firstMouse = true;
+float yaw   = -90.0f;
+float pitch =  0.0f;
+float lastX =  800.0f / 2.0;
+float lastY =  600.0 / 2.0;
+glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
+
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+    if (firstMouse) {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos;
+    lastX = xpos;
+    lastY = ypos;
+
+    float sensitivity = 0.1f;
+    xoffset *= sensitivity;
+    yoffset *= sensitivity;
+
+    yaw   += xoffset;
+    pitch += yoffset;
+
+    if(pitch > 89.0f)
+        pitch = 89.0f;
+    if(pitch < -89.0f)
+        pitch = -89.0f;
+
+    glm::vec3 direction;
+    direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    direction.y = sin(glm::radians(pitch));
+    direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    cameraFront = glm::normalize(direction);
 }
 
 int main() {
@@ -36,6 +77,8 @@ int main() {
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     glEnable(GL_DEPTH_TEST);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetCursorPosCallback(window, mouse_callback);
 
     // Data
     float vertices[] = {
@@ -105,13 +148,15 @@ int main() {
     ourShader.use();
 
     // Other initial data points for use in the loop
-    glm::mat4 trans = glm::mat4(1.0f);
+    const float speed = 2.0f;
+    float deltaTime = 0.0f;	// Time between current frame and last frame
+    float lastFrame = 0.0f;
 
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
     glm::mat4 view = glm::mat4(1.0f);
-    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+    view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
     glm::mat4 projection;
     projection = glm::perspective(glm::radians(90.0f), 800.0f / 600.0f, 0.1f, 100.0f);
@@ -119,37 +164,36 @@ int main() {
     //Usage
     while(!glfwWindowShouldClose(window)) {
         //set state here
-        float timeValue = glfwGetTime();
-        float colourG = (sin(timeValue) / 2.0f) + 0.5f;
-        float colourR = (sin(timeValue + ((2 * 3.1415) / 3)) / 2.0f) + 0.5f;
-        float colourB = (sin(timeValue + ((4*3.1415)/3)) / 2.0f) + 0.5f;
-        unsigned int transformLoc = glGetUniformLocation(ourShader.ID, "transform");
-        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+        float colourG = (sin(currentFrame) / 2.0f) + 0.5f;
+        float colourR = (sin(currentFrame + ((2 * 3.1415) / 3)) / 2.0f) + 0.5f;
+        float colourB = (sin(currentFrame + ((4 * 3.1415) / 3)) / 2.0f) + 0.5f;
 
-        unsigned int modelLoc = glGetUniformLocation(ourShader.ID, "model");
-        unsigned int viewLoc = glGetUniformLocation(ourShader.ID, "view");
-        unsigned int projectionLoc = glGetUniformLocation(ourShader.ID, "projection");
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+        view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+
+        ourShader.setMatrix("model", model);
+        ourShader.setMatrix("view", view);
+        ourShader.setMatrix("projection", projection);
 
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-            view = glm::translate(view, glm::vec3(0.0f, 0.0f, 0.02f));
+            cameraPos += speed * deltaTime * cameraFront;
         }
         if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-            view = glm::translate(view, glm::vec3(0.02f, 0.0f, 0.0f));
+            cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * deltaTime  * speed;
         }
         if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-            view = glm::translate(view, glm::vec3(0.0f, 0.0f, -0.02f));
+            cameraPos -= speed * deltaTime  * cameraFront;
         }
         if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-            view = glm::translate(view, glm::vec3(-0.02f, 0.0f, 0.0f));
+            cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * deltaTime  * speed;
         }
         if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-            view = glm::translate(view, glm::vec3(0.0f, 0.02f, 0.0f));
+            cameraPos -= speed * deltaTime  * cameraUp;
         }
         if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-            view = glm::translate(view, glm::vec3(0.0f, -0.02f, 0.0f));
+            cameraPos += speed * deltaTime  * cameraUp;
         }
 
         if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
@@ -167,7 +211,7 @@ int main() {
 
         ourShader.setInt("texture0", 0);
         ourShader.setInt("texture1", 1);
-        ourShader.setFloat("time",timeValue);
+        ourShader.setFloat("time", currentFrame);
         glUniform4f(glGetUniformLocation(ourShader.ID,"rainbowColour"), colourR, colourG, colourB, 1.0f);
 
         //rendering stuff goes here
