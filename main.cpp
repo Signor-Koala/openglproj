@@ -15,6 +15,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 }
 
 bool firstMouse = true;
+int flip = 1;
 float yaw   = -90.0f;
 float pitch =  0.0f;
 float lastX =  800.0f / 2.0;
@@ -39,6 +40,9 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
     float sensitivity = 0.1f;
     xoffset *= sensitivity;
     yoffset *= sensitivity;
+
+    yaw   += xoffset;
+    pitch += yoffset;
 
     if(pitch > 89.0f) {
         pitch = 89.0f;
