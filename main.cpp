@@ -7,11 +7,13 @@
 #include "camera.h"
 #include "utilities.h"
 #include "mesh.h"
+#include "model.h"
 #include <iostream>
 #include <cmath>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#include <filesystem>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -62,107 +64,8 @@ int main() {
     glEnable(GL_DEPTH_TEST);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-    // Data
-    float vertices[] = {
-        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
-        0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,
-        0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
-        0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
-
-        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,
-        0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 0.0f,
-        0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,
-
-        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-
-        0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-        0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
-        0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-        0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-        0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
-        0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
-        0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f,
-        0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
-        0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
-
-        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f,
-        0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
-        0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
-    };
-
-    // Usage of data
-    unsigned int VBO;
-    glGenBuffers(1, &VBO);
-    unsigned int VAO;
-    glGenVertexArrays(1, &VAO);
-    unsigned int lightVAO;
-    glGenVertexArrays(1, &lightVAO);
-    unsigned int EBO;
-    glGenBuffers(1, &EBO);
-
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
-
-    glBindVertexArray(lightVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    // Textures
-    const unsigned int tex_len = 2;
-    unsigned int textures[tex_len];
-    std::string texture_files[tex_len] = {"container2.png", "container2_specular.png"};
-    stbi_set_flip_vertically_on_load(true);
-
-    glGenTextures(2, textures);
-    for (int i = 0; i < tex_len; i++) {
-        glBindTexture(GL_TEXTURE_2D, textures[i]);
-        int width, height, nrChannels;
-        unsigned char *data = stbi_load(texture_files[i].c_str(), &width, &height, &nrChannels, 0);
-        if (data) {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-            glGenerateMipmap(GL_TEXTURE_2D);
-        } else {
-            std::cerr << "Failed to load textures[0]" << std::endl;
-        }
-        stbi_image_free(data);
-    }
-
-    for (int i = 0; i < tex_len; i++) {
-        glActiveTexture(GL_TEXTURE0+i);
-        glBindTexture(GL_TEXTURE_2D, textures[i]);
-    }
-
-    //Shader
-    Shader lightingShader("lightingShader.vert", "lightingShader.frag");
-    lightingShader.use();
-    Shader lightSourceShader("lightSourceShader.vert", "lightSourceShader.frag");
-    lightSourceShader.use();
-
+    Shader modelShader("model.vert","model.frag");
+    Model testModel(std::filesystem::path("backpack/backpack.obj").c_str());
     // Other initial data points for use in the loop
     const float speed = 2.0f;
     deltaTime = 0.0f;	// Time between current frame and last frame
@@ -203,35 +106,11 @@ int main() {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        lightingShader.use();
-        glBindVertexArray(VAO);
-
-        lightingShader.setVec3("lightPos", lightPos);
-        lightingShader.setVec3("viewPos", camera.Position);
-
-        lightingShader.setVec3("lightSourceColor",  1.0f, 1.0f, 1.0f);
-        lightingShader.setVec3("lightAmbientColor",  1.0f, 1.0f, 1.0f);
-        lightingShader.setMatrix("view", view);
-        lightingShader.setMatrix("projection", projection);
-
-        lightingShader.setInt("Material.diffuse", 0);
-        lightingShader.setInt("Material.specular", 1);
-        lightingShader.setFloat("Material.specularStrength", 0.5f);
-        lightingShader.setFloat("Material.reflectivity", 32);
-        lightingShader.setMatrix("model", model);
-
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-
-        lightSourceShader.use();
-        light_model = glm::mat4(1.0f);
-        light_model = glm::translate(light_model, lightPos);
-        light_model = glm::scale(light_model, glm::vec3(0.2f));
-        lightSourceShader.setMatrix("model", light_model);
-        lightSourceShader.setMatrix("view", view);
-        lightSourceShader.setMatrix("projection", projection);
-        glBindVertexArray(lightVAO);
-
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        modelShader.use();
+        modelShader.setMatrix("projection", projection);
+        modelShader.setMatrix("view", view);
+        modelShader.setMatrix("model", model);
+        testModel.Draw(modelShader);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
