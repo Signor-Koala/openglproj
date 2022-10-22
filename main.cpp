@@ -6,8 +6,12 @@
 #include "shader.h"
 #include "camera.h"
 #include "utilities.h"
+#include "mesh.h"
 #include <iostream>
 #include <cmath>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
