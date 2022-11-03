@@ -63,7 +63,59 @@ int main() {
 
     glEnable(GL_DEPTH_TEST);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    stbi_set_flip_vertically_on_load(true);
 
+    float chessBoard[512][512][3];
+    int threshold = 512;
+    for (int indexx = 0; indexx < 512; ++indexx) {
+        for (int indexy = 0; indexy < 512; ++indexy) {
+            float last = 0;
+            for (int indexz = 1; indexz < 64; ++indexz) {
+                int v = sqrt(indexx*indexx + indexy*indexy + indexz*indexz);
+                if (v > threshold){
+                    chessBoard[indexx][indexy][0] = indexx/50;
+                    chessBoard[indexx][indexy][2] = indexy/50;
+                    chessBoard[indexx][indexy][1] =(((threshold-last)/(v-last)) + indexz)/50;
+                    break;
+                }
+                last = v;
+            }
+        }
+    }
+
+//    unsigned int indicesChess[511*511*2*3];
+    std::vector<unsigned int> indicesChess;
+
+//    indicesChess[0] = 1;
+    for (unsigned int indexx = 0; indexx < 511*511; indexx += 511) {
+        for (unsigned int indexy = 0; indexy < 511; ++indexy) {
+            indicesChess.push_back(indexy + indexx);
+            indicesChess.push_back(indexx + indexy + 1);
+            indicesChess.push_back(indexx + indexy + 512);
+            indicesChess.push_back(indexx + indexy + 1);
+            indicesChess.push_back(indexx + indexy + 512);
+            indicesChess.push_back(indexx + indexy + 512 + 1);
+        }
+    }
+
+    unsigned int VAO, VBO, EBO;
+
+    glGenBuffers(1, &VBO);
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &EBO);
+
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, (512*512*3 * sizeof(float)), &chessBoard[0], GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesChess.size() * sizeof(unsigned int), &indicesChess[0], GL_STATIC_DRAW);
+
+    glBindVertexArray(0);
+
+    Shader basicShader("basic.vert", "basic.frag");
     Shader modelShader("model.vert","model.frag");
     Model testModel(std::filesystem::path("backpack/backpack.obj").c_str());
     // Other initial data points for use in the loop
@@ -72,13 +124,15 @@ int main() {
     lastFrame = 0.0f;
 
     glm::mat4 model = glm::mat4(1.0f);
-    model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+//    model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
     glm::mat4 view = glm::mat4(1.0f);
     glm::mat4 projection;
     projection = glm::perspective(glm::radians(90.0f), 800.0f / 600.0f, 0.1f, 100.0f);
 
     glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
     glm::mat4 light_model = glm::mat4(1.0f);
+
+    basicShader.use();
 
     //Usage
     while(!glfwWindowShouldClose(window)) {
@@ -91,10 +145,10 @@ int main() {
 
         processInput(window);
         if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-            model = glm::rotate(model, glm::radians(-1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+//            model = glm::rotate(model, glm::radians(-1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         }
         if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-            model = glm::rotate(model, glm::radians(-1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+//            model = glm::rotate(model, glm::radians(-1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         }
         if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
             model = glm::rotate(model, glm::radians(1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -106,11 +160,16 @@ int main() {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        modelShader.use();
-        modelShader.setMatrix("projection", projection);
-        modelShader.setMatrix("view", view);
-        modelShader.setMatrix("model", model);
-        testModel.Draw(modelShader);
+//        modelShader.use();
+        basicShader.setMatrix("projection", projection);
+        basicShader.setMatrix("view", view);
+        basicShader.setMatrix("model", model);
+        basicShader.setFloat("time",abs(glm::sin(currentFrame)));
+//        testModel.Draw(modelShader);
+
+        glBindVertexArray(VAO);
+        glDrawElements(GL_TRIANGLES, indicesChess.size(), GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
