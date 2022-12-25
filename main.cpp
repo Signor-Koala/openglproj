@@ -37,6 +37,8 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+const unsigned int size = 10;
+
 int main() {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -61,37 +63,35 @@ int main() {
     glfwSetScrollCallback(window, scroll_callback);
 
 
-    glEnable(GL_DEPTH_TEST);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glEnable(GL_DEPTH_TEST);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     stbi_set_flip_vertically_on_load(true);
 
-    std::vector<glm::vec3> chessBoard;
-    chessBoard.push_back(glm::vec3{0.0, 0, 0});
-    chessBoard.push_back(glm::vec3{0.1, 0.0, 0});
-    chessBoard.push_back(glm::vec3{0.2, 0, 0});
-    chessBoard.push_back(glm::vec3{0.0, 0.1, 0});
-    chessBoard.push_back(glm::vec3{0.1, 0.1, 0});
-    chessBoard.push_back(glm::vec3{0.2, 0.1, 0});
-    chessBoard.push_back(glm::vec3{0.0, 0.2, 0});
-    chessBoard.push_back(glm::vec3{0.1, 0.2, 0});
-    chessBoard.push_back(glm::vec3{0.2, 0.2, 0});
-    std::vector<unsigned int> indicesChess;
-    for (int i = 0; i < 2; i++) {
-        indicesChess.push_back(i);
-        indicesChess.push_back(i+1);
-        indicesChess.push_back(i+3);
-        indicesChess.push_back(i+1);
-        indicesChess.push_back(i+3);
-        indicesChess.push_back(i+4);
+    float chessBoard[size][size][3];
+    int threshold = 512;
+    for (int indexx = 0; indexx < size; ++indexx) {
+        for (int indexy = 0; indexy < size; ++indexy) {
+            chessBoard[indexx][indexy][0] = indexx;
+            chessBoard[indexx][indexy][2] = indexy;
+            chessBoard[indexx][indexy][1] = indexy*indexx;
+        }
     }
-    for (int i = 3; i < 5; i++) {
-        indicesChess.push_back(i);
-        indicesChess.push_back(i+1);
-        indicesChess.push_back(i+3);
-        indicesChess.push_back(i+1);
-        indicesChess.push_back(i+3);
-        indicesChess.push_back(i+4);
+
+//    unsigned int indicesChess[511*511*2*3];
+    std::vector<unsigned int> indicesChess;
+
+//    indicesChess[0] = 1;
+// change jstride of indexx
+    for (unsigned int indexx = 0; indexx < (size-1)*(size-1); indexx += size) {
+        for (unsigned int indexy = 0; indexy < size-1; ++indexy) {
+            indicesChess.push_back(indexy + indexx);
+            indicesChess.push_back(indexx + indexy + 1);
+            indicesChess.push_back(indexx + indexy + size);
+            indicesChess.push_back(indexx + indexy + 1);
+            indicesChess.push_back(indexx + indexy + size);
+            indicesChess.push_back(indexx + indexy + size + 1);
+        }
     }
 
     unsigned int VAO, VBO, EBO;
@@ -102,8 +102,8 @@ int main() {
 
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(glm::vec3), &chessBoard[0], GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glBufferData(GL_ARRAY_BUFFER, (size*size*3 * sizeof(float)), &chessBoard[0], GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
     glEnableVertexAttribArray(0);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
@@ -112,8 +112,8 @@ int main() {
     glBindVertexArray(0);
 
     Shader basicShader("basic.vert", "basic.frag");
-//    Shader modelShader("model.vert","model.frag");
-//    Model testModel(std::filesystem::path("backpack/backpack.obj").c_str());
+    Shader modelShader("model.vert","model.frag");
+    Model testModel(std::filesystem::path("backpack/backpack.obj").c_str());
     // Other initial data points for use in the loop
     const float speed = 2.0f;
     deltaTime = 0.0f;	// Time between current frame and last frame
@@ -160,8 +160,7 @@ int main() {
         basicShader.setMatrix("projection", projection);
         basicShader.setMatrix("view", view);
         basicShader.setMatrix("model", model);
-        if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS)
-            basicShader.setFloat("time",abs(glm::sin(currentFrame)));
+        basicShader.setFloat("time",abs(glm::sin(currentFrame)));
 //        testModel.Draw(modelShader);
 
         glBindVertexArray(VAO);
